@@ -1,0 +1,270 @@
+$degPerRotation: 12;
+$scrollSnapDivisions: 8;
+
+:root {
+  --radius: 10vw;
+  --invis-radius: 50vw;
+  --invis-offset: -50vw;
+  --offset: 15vw;
+  --c-bg: #F4F3F0;
+  --c-accent: #FF5E2B;
+  --c-text: #222;
+  --item-opacity-default: 0.2;
+  --snap-height: 40vh;
+  --snap-count: 8; /* match scss var */
+}
+
+body, html {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--c-bg);
+  overflow: hidden;
+  min-width: 320px;
+}
+
+.scroller {
+  scroll-snap-type: y mandatory;
+  height: 100vh;
+  overflow-y: scroll;
+  position: relative;
+  z-index: 1;
+  scroll-timeline-name: --scrollTimeline;
+}
+
+.buffer {
+  height: 100vh;
+  scroll-snap-align: start;
+}
+
+.snap {
+  height: var(--snap-height);
+  scroll-snap-align: end;
+}
+
+.spinner {
+  position: absolute;
+  top: -9999px;
+  bottom: -9999px;
+  left: var(--invis-offset);
+  width: calc(var(--radius) * 2);
+  height: calc(var(--radius) * 2);
+  margin: auto;
+  animation-duration: 1ms; /* Firefox fix */
+  animation-direction: alternate;
+  animation-timeline: --scrollTimeline;
+  animation-timing-function: linear;
+  animation-name: scrolly;
+  transform-origin: 50% 50%;
+}
+
+.spinner-wrap {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation-duration: 1ms; /* Firefox fix */
+  animation-direction: alternate;
+  animation-timeline: --scrollTimeline;
+  animation-timing-function: linear;
+  animation-name: vertical;
+}
+
+.dot {
+  position: absolute;
+  top: 0;
+  left: calc(50vw - var(--invis-radius) + 3.5vw);
+  bottom: 0;
+  margin: auto;
+  width: 3vw;
+  height: 3vw;
+  border-radius: 50%;
+  background-color: var(--c-accent);
+   animation-duration: 1ms; /* Firefox fix */
+  animation-direction: alternate;
+  animation-timeline: --scrollTimeline;
+  animation-timing-function: linear;
+  animation-name: dotAnimation;
+}
+
+.item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  font-size: min(7vw, 96px);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  font-family: 'LibreCaslonCondensed';
+  transform-origin: 0 50%;
+  opacity: var(--item-opacity-default);
+  animation-duration: 1ms; /* Firefox fix */
+  animation-direction: alternate;
+  animation-timeline: --scrollTimeline;
+  animation-timing-function: linear;
+}
+
+.item-wrap {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+}
+// Item transforms and animation names
+@for $i from 1 through 13 {
+  .item:nth-child(#{$i}n) {
+    transform: rotate(#{($i * $degPerRotation) - 60}deg) translateX(var(--invis-radius));
+    animation-name: item-#{$i};
+  }
+}
+
+// Itam animations
+@for $i from 6 through 13 {
+  @keyframes item-#{$i} {
+      0% {
+        opacity: var(--item-opacity-default);
+      }
+      #{(100 / $scrollSnapDivisions * (($i - 1) - 5))}% {
+        opacity: var(--item-opacity-default);
+      }
+      #{(100 / $scrollSnapDivisions * ($i - 5))}% {
+        opacity: 1;
+      }
+      #{(100 / $scrollSnapDivisions * ($i + 1 - 5))}% {
+          opacity: var(--item-opacity-default);
+      }
+    }
+}
+
+// Make the first item separately
+@keyframes item-5 {
+  0% {
+    opacity: 1;
+  }
+  #{100 / $scrollSnapDivisions}% {
+    opacity: var(--item-opacity-default);
+  }
+}
+
+// Rotational animation
+@keyframes scrolly {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: rotate(-96deg);
+  }
+}
+
+// Vertical offset animation
+@keyframes vertical {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(calc(var(--snap-height) * var(--snap-count)));
+  }
+}
+
+// Dot animation
+@keyframes dotAnimation {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  @for $i from 6 through 13 {
+     #{(100 / $scrollSnapDivisions * (($i - 1) - 5))}% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    @if $i > 5 {
+      #{((100 / $scrollSnapDivisions * (($i - 1) - 5)) + ((100 / $scrollSnapDivisions) / 2))}% {
+          opacity: 0;
+          transform: scale(0.2);
+        }
+    }
+  }
+}
+
+@font-face {
+  font-family: 'LibreCaslonCondensed';
+  src: url('https://assets.codepen.io/215059/LibreCaslonCondensed-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.explainer {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  background-color: #fff;
+  width: 300px;
+  padding: 24px;
+  padding-right: 40px;
+  display: none;
+  z-index: 2;
+   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.explainer input, .explainer div {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+}
+
+.explainer div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+}
+
+.explainer div::before {
+  content: '×';
+}
+
+.explainer:has(input:checked) div::before {
+  content: 'i';
+}
+
+.explainer:has(input:checked) p {
+  display: none;
+}
+
+.explainer:has(input:checked) {
+  background-color: transparent;
+}
+
+.explainer a {
+  color: inherit;
+  font-family: inherit;
+}
+
+.explainer p {
+ 
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.explainer p ~ p {
+  margin-top: 1em;
+}
+
+@media (min-width: 320px) {
+  .explainer {
+    display: block;
+  }
+}

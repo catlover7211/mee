@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "babel-cli": "^6.26.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^9.1.3",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1"
+  },
+
+  "scripts": {
+    "start": "node ./bin/www",
+    "build": "babel 1.js -o script.js -w"
+  }
+}
+
+

@@ -1,122 +1,175 @@
-import gsap from "https://cdn.skypack.dev/gsap@3.12.0";
-import { ScrollTrigger } from "https://cdn.skypack.dev/gsap@3.12.0/ScrollTrigger";
+const $window = $(window);
+const $body = $('body');
 
-if (!CSS.supports('animation-timeline: scroll()')) {
-  gsap.registerPlugin(ScrollTrigger);
-  console.clear();
-  const scrub = 0.2
-  const name = document.querySelector("section:nth-of-type(1) svg");
-  gsap.timeline()
-    .to(name, {
-      scrollTrigger: {
-        invalidateOnRefresh: true,
-        trigger: name.parentNode,
-        scrub,
-        start: "top top",
-        end: "bottom top-=25%"
-      },
-      opacity: 1,
-    })
-    .to(name, {
-      scrollTrigger: {
-        invalidateOnRefresh: true,
-        trigger: name.parentNode,
-        scrub,
-        start: "top top",
-        end: "bottom top"
-      },
-      keyframes: {
-        "0%": { background: "transparent" },
-        "95%": { background: "transparent" },
-        "100%": { z: "99vh", background: "black" }
-      }
-    }, 0)
-    ;
+class Slideshow {
+/*************  ✨ Codeium Command ⭐  *************/
+  /**
+   * Class constructor
+   * @param {Object} [userOptions] - User-defined options
+   * @prop {$el} - jQuery object of the slideshow container
+   * @prop {Number} maxSlide - Total number of slides in the slideshow
+   * @prop {Boolean} showArrows - Whether or not to display the navigation arrows
+   * @prop {Boolean} showPagination - Whether or not to display the pagination
+   * @prop {Number} duration - Duration of the slideshow animation
+   * @prop {Boolean} autoplay - Whether or not to enable autoplay
+   * @prop {Number} animationDuration - Duration of the animation
+   * @prop {$controls} - jQuery object of the navigation elements
+   * @prop {Number} currentSlide - Current slide number
+   * @prop {Boolean} isAnimating - Whether or not the slideshow is currently animating
+   */
+/******  3d5bee47-a480-40c4-8bca-f0c675aa8122  *******/	constructor (userOptions = {}) {
+    const defaultOptions = {
+      $el: $('.slideshow'),
+      showArrows: false,
+      showPagination: true,
+      duration: 10000,
+      autoplay: true
+    }
+    
+    let options = Object.assign({}, defaultOptions, userOptions);
+    
+		this.$el = options.$el;
+		this.maxSlide = this.$el.find($('.js-slider-home-slide')).length;
+    this.showArrows = this.maxSlide > 1 ? options.showArrows : false;
+    this.showPagination = options.showPagination;
+		this.currentSlide = 1;
+		this.isAnimating = false;
+		this.animationDuration = 1200;
+		this.autoplaySpeed = options.duration;
+		this.interval;
+		this.$controls = this.$el.find('.js-slider-home-button');
+    this.autoplay = this.maxSlide > 1 ? options.autoplay : false;
 
-  const p = document.querySelector("section:nth-of-type(2) p");
-  gsap
-    .timeline()
-    .to(p, {
-      opacity: 1,
-      immediateRender: false,
-      scrollTrigger: {
-        trigger: p.parentNode.parentNode,
-        scrub,
-        start: "top bottom",
-        end: "top 50%"
-      }
-    })
-    .to(p, {
-      opacity: 0,
-      immediateRender: false,
-      scrollTrigger: {
-        trigger: p.parentNode.parentNode,
-        scrub,
-        start: "bottom bottom",
-        end: "bottom 50%"
+		this.$el.on('click', '.js-slider-home-next', (event) => this.nextSlide());
+		this.$el.on('click', '.js-slider-home-prev', (event) => this.prevSlide());
+    this.$el.on('click', '.js-pagination-item', event => {
+      if (!this.isAnimating) {
+        this.preventClick();
+  this.goToSlide(event.target.dataset.slide);
       }
     });
 
-  const video = document.querySelector(".video-wrap");
-  gsap
-    .timeline()
-    .to(video, {
-      opacity: 1,
-      immediateRender: false,
-      scrollTrigger: {
-        trigger: video.parentNode,
-        scrub,
-        start: "top bottom",
-        end: "top 50%"
+		this.init();
+	}
+  
+  init() {
+    this.goToSlide(1);
+    if (this.autoplay) {
+      this.startAutoplay();
+    }
+    
+    if (this.showPagination) {
+      let paginationNumber = this.maxSlide;
+      let pagination = '<div class="pagination"><div class="container">';
+      
+      for (let i = 0; i < this.maxSlide; i++) {
+        let item = `<span class="pagination__item js-pagination-item ${ i === 0 ? 'is-current' : ''}" data-slide=${i + 1}>${i + 1}</span>`;
+        pagination  = pagination + item;
       }
-    })
-    .to(video, {
-      opacity: 0,
-      immediateRender: false,
-      scrollTrigger: {
-        trigger: video.parentNode,
-        scrub,
-        start: "bottom bottom",
-        end: "bottom 50%"
+      
+      pagination = pagination + '</div></div>';
+      
+      this.$el.append(pagination);
+    }
+  }
+  
+  preventClick() {
+		this.isAnimating = true;
+		this.$controls.prop('disabled', true);
+		clearInterval(this.interval);
+
+		setTimeout(() => {
+			this.isAnimating = false;
+			this.$controls.prop('disabled', false);
+      if (this.autoplay) {
+			  this.startAutoplay();
       }
-    });
-  // Signature details
-  gsap.to('.signature .head', {
-    '--draw': 0,
-    scrollTrigger: {
-      trigger: 'section:last-of-type',
-      scrub,
-      start: 'top 50%',
-      end: 'top 20%',
+		}, this.animationDuration);
+	}
+
+	goToSlide(index) {    
+    this.currentSlide = parseInt(index);
+    
+    if (this.currentSlide > this.maxSlide) {
+      this.currentSlide = 1;
     }
-  })
-  gsap.to('.ear', {
-    '--draw': 0,
-    scrollTrigger: {
-      trigger: 'section:last-of-type',
-      scrub,
-      start: 'top 20%',
-      end: 'top 10%',
+    
+    if (this.currentSlide === 0) {
+      this.currentSlide = this.maxSlide;
     }
-  })
-  gsap.to('.eye', {
-    '--draw': 0,
-    fill: 'black',
-    scrollTrigger: {
-      trigger: 'section:last-of-type',
-      scrub,
-      start: 'top 20%',
-      end: 'top 10%',
+    
+    const newCurrent = this.$el.find('.js-slider-home-slide[data-slide="'+ this.currentSlide +'"]');
+    const newPrev = this.currentSlide === 1 ? this.$el.find('.js-slider-home-slide').last() : newCurrent.prev('.js-slider-home-slide');
+    const newNext = this.currentSlide === this.maxSlide ? this.$el.find('.js-slider-home-slide').first() : newCurrent.next('.js-slider-home-slide');
+    
+    this.$el.find('.js-slider-home-slide').removeClass('is-prev is-next is-current');
+    this.$el.find('.js-pagination-item').removeClass('is-current');
+    
+		if (this.maxSlide > 1) {
+      newPrev.addClass('is-prev');
+      newNext.addClass('is-next');
     }
-  })
-  gsap.to('.nose', {
-    '--draw': 0,
-    fill: 'black',
-    scrollTrigger: {
-      trigger: 'section:last-of-type',
-      scrub,
-      start: 'top 10%',
-      end: 'top top',
-    }
-  })
+    
+    newCurrent.addClass('is-current');
+    this.$el.find('.js-pagination-item[data-slide="'+this.currentSlide+'"]').addClass('is-current');
+  }
+  
+  nextSlide() {
+    this.preventClick();
+    this.goToSlide(this.currentSlide + 1);
+	}
+   
+	prevSlide() {
+    this.preventClick();
+    this.goToSlide(this.currentSlide - 1);
+	}
+
+	startAutoplay() {
+		this.interval = setInterval(() => {
+			if (!this.isAnimating) {
+				this.nextSlide();
+			}
+		}, this.autoplaySpeed);
+	}
+
+	destroy() {
+		this.$el.off();
+	}
 }
+
+(function() {
+	let loaded = false;
+	let maxLoad = 3000;  
+  
+	function load() {
+		const options = {
+      showPagination: true
+    };
+
+    let slideShow = new Slideshow(options);
+	}
+  
+	function addLoadClass() {
+		$body.addClass('is-loaded');
+
+		setTimeout(function() {
+			$body.addClass('is-animated');
+		}, 600);
+	}
+  
+	$window.on('load', function() {
+		if(!loaded) {
+			loaded = true;
+			load();
+		}
+	});
+  
+	setTimeout(function() {
+		if(!loaded) {
+			loaded = true;
+			load();
+		}
+	}, maxLoad);
+
+	addLoadClass();
+})();
